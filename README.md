@@ -1,3 +1,3 @@
 # merge-test
 
-feature test
+feature test 2
