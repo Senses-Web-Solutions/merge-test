@@ -4,27 +4,41 @@ on:
   pull_request:
 
 jobs:
-  check-branch:
+  enforce-branch-policy:
     runs-on: ubuntu-latest
     permissions:
       statuses: write
+
     steps:
-      - name: Validate source branch
+      - name: Validate source branch for release merges
         run: |
           SRC="${GITHUB_HEAD_REF}"
           DEST="${GITHUB_BASE_REF}"
 
-          # Only enforce when target is teamleaf-10-release
+          echo "Source branch: $SRC"
+          echo "Target branch: $DEST"
+
+          # Only enforce rules when merging into teamleaf-10-release
           if [[ "$DEST" == "teamleaf-10-release" ]]; then
 
             # Allowed: teamleaf-10 or teamleaf-10/*
             if [[ "$SRC" == "teamleaf-10" ]] || [[ "$SRC" =~ ^teamleaf-10/ ]]; then
-              echo "✔ Allowed: $SRC → $DEST"
+              echo "✔ Allowed: $SRC originates from teamleaf-10"
               exit 0
             fi
 
-            echo "❌ ERROR: Only branches originating from 'teamleaf-10' may merge into teamleaf-10-release."
-            echo "Source branch '$SRC' is not allowed."
+            # Allowed: branches created from teamleaf-10-release
+            if [[ "$SRC" =~ ^teamleaf-10-release ]]; then
+              echo "✔ Allowed: $SRC originates from teamleaf-10-release"
+              exit 0
+            fi
+
+            # Otherwise reject
+            echo "❌ ERROR: Branch '$SRC' is not allowed to merge into teamleaf-10-release."
+            echo "Allowed sources:"
+            echo "  - teamleaf-10"
+            echo "  - teamleaf-10/*"
+            echo "  - teamleaf-10-release*"
             exit 1
           fi
 
