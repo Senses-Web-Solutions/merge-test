@@ -1,0 +1,31 @@
+name: Enforce Release Merge Policy
+
+on:
+  pull_request:
+
+jobs:
+  check-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Validate source branch
+        run: |
+          SRC="${GITHUB_HEAD_REF}"
+          DEST="${GITHUB_BASE_REF}"
+
+          # Only enforce when target is teamleaf-10-release
+          if [[ "$DEST" == "teamleaf-10-release" ]]; then
+
+            # Allowed: teamleaf-10 or teamleaf-10/*
+            if [[ "$SRC" == "teamleaf-10" ]] || [[ "$SRC" =~ ^teamleaf-10/ ]]; then
+              echo "✔ Allowed: $SRC → $DEST"
+              exit 0
+            fi
+
+            echo "❌ ERROR: Only branches originating from 'teamleaf-10' may merge into teamleaf-10-release."
+            echo "Source branch '$SRC' is not allowed."
+            exit 1
+          fi
+
+          echo "✔ Not a release PR — no restrictions."
